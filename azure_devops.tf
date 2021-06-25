@@ -69,3 +69,23 @@ resource "azuredevops_build_definition" "ci_trigger_build" {
     value = "**/*.sln"
   }
 }
+
+resource "azuredevops_build_definition" "ci_trigger_build_infra" {
+  project_id      = azuredevops_project.project.id
+  name            = "Build Definition for cloud resources creation"
+  agent_pool_name = "Azure Pipelines"
+  ci_trigger {
+    use_yaml = true
+  }
+  repository {
+    repo_type   = "TfsGit"
+    repo_id     = azuredevops_git_repository.infra_repository.id
+    branch_name = "main"
+    yml_path    = "infra.yml"
+  }
+  variable_groups = [azuredevops_variable_group.vars.id]
+  variable {
+    name  = "environment"
+    value = "main"
+  }
+}
