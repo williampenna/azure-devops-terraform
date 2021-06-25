@@ -8,8 +8,8 @@ terraform {
 }
 
 provider "azuredevops" {
-  org_service_url       = "https://dev.azure.com/williamcezart" #export AZDO_ORG_SERVICE_URL
-  personal_access_token = "d37fy4nxruqd3nla7akvensx7qunfakweufpfealxqoamvwj3quq" #export AZDO_PERSONAL_ACCESS_TOKEN
+  org_service_url       = var.AZURE_DEVOPS_ORG_SERVICE_URL #export AZDO_ORG_SERVICE_URL
+  personal_access_token = var.AZURE_DEVOPS_PERSONAL_TOKEN #export AZDO_PERSONAL_ACCESS_TOKEN
 }
 
 resource "azuredevops_project" "project" {
