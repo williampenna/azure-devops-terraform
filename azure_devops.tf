@@ -15,58 +15,28 @@ provider "azuredevops" {
 resource "azuredevops_project" "project" {
   name               = "Azure_Devops_With_Terraform"
   description        = "Test with azure devops and terraform"
-  visibility         = "private"
+  visibility         = "public"
   version_control    = "Git"
   work_item_template = "Agile"
 }
 
 resource "azuredevops_git_repository" "infra_repository" {
   project_id = azuredevops_project.project.id
-  name       = "Infrastructure Repository"
+  name       = "infrastructure"
   initialization {
     init_type = "Clean"
   }
 }
 
-resource "azuredevops_git_repository" "backend_repository" {
-  project_id = azuredevops_project.project.id
-  name       = "Back-end Repository"
-  initialization {
-    init_type   = "Import"
-    source_type = "Git"
-    source_url  = "https://github.com/williampenna/typescript-boilerplate.git"
-  }
-}
-
 resource "azuredevops_variable_group" "vars" {
   project_id   = azuredevops_project.project.id
-  name         = "Infrastructure Pipeline Variables"
+  name         = "dev-vars"
   description  = "Managed by Terraform"
   allow_access = true
 
   variable {
     name  = "ENVIRONMENT"
     value = "dev"
-  }
-}
-
-resource "azuredevops_build_definition" "ci_trigger_build" {
-  project_id      = azuredevops_project.project.id
-  name            = "Build Definition for typescript project"
-  agent_pool_name = "Azure Pipelines"
-  ci_trigger {
-    use_yaml = true
-  }
-  repository {
-    repo_type   = "TfsGit"
-    repo_id     = azuredevops_git_repository.backend_repository.id
-    branch_name = "develop"
-    yml_path    = "typescript.yml"
-  }
-  variable_groups = [azuredevops_variable_group.vars.id]
-  variable {
-    name  = "solution"
-    value = "**/*.sln"
   }
 }
 
@@ -80,12 +50,12 @@ resource "azuredevops_build_definition" "ci_trigger_build_infra" {
   repository {
     repo_type   = "TfsGit"
     repo_id     = azuredevops_git_repository.infra_repository.id
-    branch_name = "main"
+    branch_name = "develop"
     yml_path    = "infra.yml"
   }
   variable_groups = [azuredevops_variable_group.vars.id]
   variable {
-    name  = "environment"
-    value = "main"
+    name  = "ENVIRONMENT"
+    value = "dev"
   }
 }
