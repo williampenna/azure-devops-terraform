@@ -3,6 +3,7 @@ provider "azuredevops" {
   personal_access_token = var.AZURE_DEVOPS_PERSONAL_TOKEN  #export AZDO_PERSONAL_ACCESS_TOKEN
 }
 
+// Cria um projeto no Azure Devops
 resource "azuredevops_project" "project" {
   name               = "Azure_Devops_With_Terraform"
   description        = "Test with azure devops and terraform"
@@ -11,6 +12,7 @@ resource "azuredevops_project" "project" {
   work_item_template = "Agile"
 }
 
+// Criar um service endpoint para dar permissão para gerenciar os serviços do Azure Devops
 resource "azuredevops_serviceendpoint_azurerm" "endpointazure" {
   project_id                = azuredevops_project.project.id
   service_endpoint_name     = "Sample AzureRM"
@@ -24,6 +26,7 @@ resource "azuredevops_serviceendpoint_azurerm" "endpointazure" {
   azurerm_subscription_name = "Microsoft Azure DEMO"
 }
 
+// Cria um repositório
 resource "azuredevops_git_repository" "infra_repository" {
   project_id = azuredevops_project.project.id
   name       = "infrastructure"
@@ -32,6 +35,7 @@ resource "azuredevops_git_repository" "infra_repository" {
   }
 }
 
+// Cria um grupo de variáveis de ambiente
 resource "azuredevops_variable_group" "vars" {
   project_id   = azuredevops_project.project.id
   name         = "dev-vars"
@@ -44,6 +48,7 @@ resource "azuredevops_variable_group" "vars" {
   }
 }
 
+// Criar um trigger na branch develop quando alguma alteração é realizada
 resource "azuredevops_build_definition" "ci_trigger_build_infra" {
   project_id      = azuredevops_project.project.id
   name            = "infrastructure_ci"
@@ -84,20 +89,23 @@ resource "azuredevops_build_definition" "ci_trigger_build_infra" {
   }
 }
 
+// Gerencia o direito do usuário no Azure Devops
 resource "azuredevops_user_entitlement" "william_user" {
   principal_name = "williamcezart@gmail.com"
 }
 
+// Grupo de leitura no projeto
 data "azuredevops_group" "project_readers" {
   project_id = azuredevops_project.project.id
   name       = "Readers"
 }
-
+// Grupo de contribuinte no projeto
 data "azuredevops_group" "project_contributors" {
   project_id = azuredevops_project.project.id
   name       = "Contributors"
 }
 
+// Gerencia um grupo no Azure Devops
 resource "azuredevops_group" "groups" {
   scope        = azuredevops_project.project.id
   display_name = "Test group"
@@ -109,6 +117,7 @@ resource "azuredevops_group" "groups" {
   ]
 }
 
+// Gerencia os membros filiados ao grupo
 resource "azuredevops_group_membership" "membership" {
   group = data.azuredevops_group.project_contributors.descriptor
   members = [
@@ -116,6 +125,7 @@ resource "azuredevops_group_membership" "membership" {
   ]
 }
 
+// Gerencia as permissões a um determinado repositório e branch do Azure Repos
 resource "azuredevops_git_permissions" "project-git-branch-permissions" {
   project_id    = azuredevops_project.project.id
   repository_id = azuredevops_git_repository.infra_repository.id
