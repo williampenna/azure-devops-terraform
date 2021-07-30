@@ -35,6 +35,16 @@ resource "azuredevops_git_repository" "infra_repository" {
   }
 }
 
+resource "azuredevops_git_repository" "typescript_repository" {
+  project_id = azuredevops_project.project.id
+  name       = "typescript_example"
+  initialization {
+    init_type = "Import"
+    source_type = "Git"
+    source_url = "https://github.com/williampenna/typescript-boilerplate.git"
+  }
+}
+
 // Cria um grupo de variáveis de ambiente
 resource "azuredevops_variable_group" "vars" {
   project_id   = azuredevops_project.project.id
@@ -89,10 +99,50 @@ resource "azuredevops_build_definition" "ci_trigger_build_infra" {
   }
 }
 
-// Gerencia o direito do usuário no Azure Devops
-resource "azuredevops_user_entitlement" "william_user" {
-  principal_name = "williamcezart@gmail.com"
+resource "azuredevops_build_definition" "ci_trigger_build_typescript" {
+  project_id      = azuredevops_project.project.id
+  name            = "typescript_ci"
+  agent_pool_name = "Azure Pipelines"
+  ci_trigger {
+    use_yaml = true
+  }
+  repository {
+    repo_type   = "TfsGit"
+    repo_id     = azuredevops_git_repository.infra_repository.id
+    branch_name = "develop"
+    yml_path    = "azure_pipelines_pr_build.yml"
+  }
+  variable_groups = [azuredevops_variable_group.vars.id]
+  variable {
+    name  = "TF_VAR_ENVIRONMENT"
+    value = "dev"
+  }
+
+  variable {
+    name  = "TF_VAR_SUBSCRIPTION_ID"
+    value = var.SUBSCRIPTION_ID
+  }
+
+  variable {
+    name  = "TF_VAR_TENANT_ID"
+    value = var.TENANT_ID
+  }
+
+  variable {
+    name  = "TF_VAR_PROJECT"
+    value = "will_test_typescript"
+  }
+
+  variable {
+    name  = "TF_VAR_LOCATION"
+    value = "eastus2"
+  }
 }
+
+// Gerencia o direito do usuário no Azure Devops
+# resource "azuredevops_user_entitlement" "william_user" {
+#   principal_name = "williamcezart@gmail.com"
+# }
 
 // Grupo de leitura no projeto
 data "azuredevops_group" "project_readers" {
@@ -118,21 +168,21 @@ resource "azuredevops_group" "groups" {
 }
 
 // Gerencia os membros filiados ao grupo
-resource "azuredevops_group_membership" "membership" {
-  group = data.azuredevops_group.project_contributors.descriptor
-  members = [
-    azuredevops_user_entitlement.william_user.descriptor
-  ]
-}
+# resource "azuredevops_group_membership" "membership" {
+#   group = data.azuredevops_group.project_contributors.descriptor
+#   members = [
+#     azuredevops_user_entitlement.william_user.descriptor
+#   ]
+# }
 
 // Gerencia as permissões a um determinado repositório e branch do Azure Repos
-resource "azuredevops_git_permissions" "project-git-branch-permissions" {
-  project_id    = azuredevops_project.project.id
-  repository_id = azuredevops_git_repository.infra_repository.id
-  branch_name   = "refs/heads/develop"
-  principal     = data.azuredevops_group.project_contributors.id
-  permissions   = {
-    RemoveOthersLocks = "Allow"
-    ForcePush         = "Deny"
-  }
-}
+# resource "azuredevops_git_permissions" "project_git_branch_permissions" {
+#   project_id    = azuredevops_project.project.id
+#   repository_id = azuredevops_git_repository.infra_repository.id
+#   branch_name   = "develop"
+#   principal     = data.azuredevops_group.project_contributors.id
+#   permissions   = {
+#     RemoveOthersLocks = "Allow"
+#     ForcePush         = "Deny"
+#   }
+# }
